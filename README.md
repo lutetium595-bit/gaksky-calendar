@@ -16,3 +16,10 @@
 
 ## 배포
 Render 같은 Node.js 서버 호스팅에 배포하고 환경변수 `ADMIN_PASSWORD`, `JWT_SECRET`를 설정하세요. GitHub Pages만으로는 이 관리자 보호 기능을 안전하게 사용할 수 없습니다.
+
+
+## Render 환경 변수
+- ADMIN_PASSWORD
+- JWT_SECRET
+
+중요: `.env`는 GitHub에 올리지 말고 Render Environment에서 설정하세요.
