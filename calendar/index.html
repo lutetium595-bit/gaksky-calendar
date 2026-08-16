@@ -18,46 +18,89 @@ button{font:inherit;cursor:pointer}.btn{padding:10px 13px;border:1px solid var(-
 .num{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;border-radius:50%;font-size:13px}.today .num{background:var(--accent);color:#fff}
 .event{margin-top:5px;padding:6px 7px;border-radius:7px;background:#eef0ff;border-left:3px solid var(--accent);font-size:12px;line-height:1.35;cursor:pointer}.event strong{font-weight:700}.time{font-weight:700;margin-right:4px}
 
-/* 분류별 일정 색상 */
-/* 일정 색상 - 라이트모드 */
+/* =========================
+   일정 색상 - 라이트모드
+========================= */
+
+/* 기본 일정 */
 .event-bar{
-  background:#243b53;
-  border-left-color:#5aa9e6;
-  color:#ffffff;
+  background:#e8f2ff;
+  border-left-color:#7eb6e8;
+  color:#40536a;
+  box-shadow:0 2px 7px rgba(92,108,150,.10);
 }
 
 .event-bar strong,
 .event-bar .time{
-  color:#ffffff;
+  color:#40536a;
 }
 
-/* 분류별 왼쪽 포인트 색상 */
+/* 방송 - 하늘빛 */
 .event-bar.cat-방송{
-  background:#243b53;
-  border-left-color:#4da3ff;
+  background:#dff1ff;
+  border-left-color:#75b9e8;
+  color:#3e617c;
 }
 
+/* 게임 - 연보라빛 */
 .event-bar.cat-게임{
-  background:#243b53;
-  border-left-color:#9b7cff;
+  background:#eee7ff;
+  border-left-color:#a88be8;
+  color:#5d5278;
 }
 
+/* 소통 - 연핑크빛 */
 .event-bar.cat-소통{
-  background:#243b53;
-  border-left-color:#ff75b5;
+  background:#ffe8f1;
+  border-left-color:#ef9abc;
+  color:#795261;
 }
 
+/* 휴방 - 크림/연노랑빛 */
 .event-bar.cat-휴방{
-  background:#243b53;
-  border-left-color:#ffb547;
+  background:#fff3d9;
+  border-left-color:#e8bd68;
+  color:#75613c;
 }
 
+/* 기타 - 민트빛 */
 .event-bar.cat-기타{
-  background:#243b53;
-  border-left-color:#45c78a;
+  background:#e2f7ef;
+  border-left-color:#79c9aa;
+  color:#41685c;
 }
 
-/* 다크모드 */
+/* 모든 일정 글자색 */
+.event-bar.cat-방송 strong,
+.event-bar.cat-방송 .time{
+  color:#3e617c;
+}
+
+.event-bar.cat-게임 strong,
+.event-bar.cat-게임 .time{
+  color:#5d5278;
+}
+
+.event-bar.cat-소통 strong,
+.event-bar.cat-소통 .time{
+  color:#795261;
+}
+
+.event-bar.cat-휴방 strong,
+.event-bar.cat-휴방 .time{
+  color:#75613c;
+}
+
+.event-bar.cat-기타 strong,
+.event-bar.cat-기타 .time{
+  color:#41685c;
+}
+
+
+/* =========================
+   일정 색상 - 다크모드
+========================= */
+
 body.dark .event-bar{
   background:#1d3247;
   color:#ffffff;
