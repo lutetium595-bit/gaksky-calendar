@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>일정표</title>
+<title>하늘이의 일정표</title>
 <style>
 :root{--bg:#eaf6ff;--card:#ffffff;--text:#202b36;--muted:#6f8190;--line:#d7e8f3;--accent:#5aa9e6;--danger:#e5484d}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
@@ -13,9 +13,23 @@ button{font:inherit;cursor:pointer}.btn{padding:10px 13px;border:1px solid var(-
 .calendar{background:var(--card);border-radius:18px;overflow:hidden;box-shadow:0 6px 24px #0000000b}.bar{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid var(--line)}
 .month{font-size:19px;font-weight:700}.nav{display:flex;gap:6px}.nav button{width:38px;height:38px;border:0;border-radius:9px;background:var(--bg);color:var(--text);font-size:20px}
 .week,.grid{display:grid;grid-template-columns:repeat(7,1fr)}.week div{text-align:center;padding:10px 3px;color:var(--muted);font-size:12px;border-bottom:1px solid var(--line)}
-.day{min-height:125px;padding:7px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.day:nth-child(7n){border-right:0}.day.other{background:#fafafa;color:#b7bbc1}
+.calendar-body{position:relative}.grid{position:relative;z-index:1}.day{height:150px;padding:7px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.day:nth-child(7n){border-right:0}.day.other{background:#fafafa;color:#b7bbc1}
+.event-layer{position:absolute;inset:0;z-index:3;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:repeat(6,150px);pointer-events:none;padding-top:34px;align-content:start}.event-bar{height:25px;margin:2px 1px;padding:4px 7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border-left:3px solid var(--accent);border-radius:0;background:#eef0ff;font-size:12px;line-height:17px;pointer-events:auto;cursor:pointer;box-shadow:0 1px 2px #0000000d}.event-bar.start{border-top-left-radius:7px;border-bottom-left-radius:7px;margin-left:6px}.event-bar.end{border-top-right-radius:7px;border-bottom-right-radius:7px;margin-right:6px}.event-bar.single{border-radius:7px;margin-left:6px;margin-right:6px}.event-bar .time{margin-right:4px}.event-bar.continuation strong{opacity:.95}
 .num{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;border-radius:50%;font-size:13px}.today .num{background:var(--accent);color:#fff}
 .event{margin-top:5px;padding:6px 7px;border-radius:7px;background:#eef0ff;border-left:3px solid var(--accent);font-size:12px;line-height:1.35;cursor:pointer}.event strong{font-weight:700}.time{font-weight:700;margin-right:4px}
+
+/* 분류별 일정 색상 */
+.event.cat-방송,.event-bar.cat-방송{background:#e8f4ff;border-left-color:#3b82f6}
+.event.cat-게임,.event-bar.cat-게임{background:#f1eaff;border-left-color:#8b5cf6}
+.event.cat-소통,.event-bar.cat-소통{background:#fff0f5;border-left-color:#ec4899}
+.event.cat-휴방,.event-bar.cat-휴방{background:#fff4e5;border-left-color:#f59e0b}
+.event.cat-기타,.event-bar.cat-기타{background:#eafbf1;border-left-color:#22a06b}
+body.dark .event.cat-방송,body.dark .event-bar.cat-방송,.event-bar.cat-방송{background:#183149;border-left-color:#60a5fa}
+body.dark .event.cat-게임,body.dark .event-bar.cat-게임,.event-bar.cat-게임{background:#2c2348;border-left-color:#a78bfa}
+body.dark .event.cat-소통,body.dark .event-bar.cat-소통,.event-bar.cat-소통{background:#42233a;border-left-color:#f472b6}
+body.dark .event.cat-휴방,body.dark .event-bar.cat-휴방,.event-bar.cat-휴방{background:#4a351b;border-left-color:#fbbf24}
+body.dark .event.cat-기타,body.dark .event-bar.cat-기타,.event-bar.cat-기타{background:#173d31;border-left-color:#34d399}
+
 .readonly .event{cursor:default}.readonly .event:hover{filter:none}.locked-note{color:var(--muted);font-size:12px;margin-right:auto;align-self:center}
 .modalbg{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:16px;z-index:20}.modalbg.show{display:flex}
 .modal{width:min(460px,100%);background:var(--card);border-radius:18px;padding:21px;box-shadow:0 20px 60px #0006}.modal h2{margin:0 0 16px}
@@ -29,8 +43,8 @@ body.dark .day.other{background:#141e26;color:#667784}
 body.dark .event{background:#203746;border-left-color:var(--accent)}
 body.dark .nav button{background:#22313c}
 
-@media(max-width:650px){h1{font-size:23px}.day{min-height:95px;padding:5px}.event{font-size:10px;padding:5px 4px}.event .detail{display:none}.num{width:25px;height:25px}.locked-note{display:none}}
-@media(max-width:430px){.day{min-height:78px}.event{border-left:0;padding:4px 2px}.time{display:block}.week div{font-size:11px}}
+@media(max-width:650px){h1{font-size:23px}.day{height:112px;padding:5px}.event{font-size:10px;padding:5px 4px}.event .detail{display:none}.num{width:25px;height:25px}.locked-note{display:none}.event-layer{grid-template-rows:repeat(6,112px);padding-top:31px}.event-bar{height:22px;margin-top:1px;margin-bottom:1px;padding:3px 4px;font-size:10px;line-height:16px}.event-bar.start{margin-left:4px}.event-bar.end{margin-right:4px}.event-bar.single{margin-left:4px;margin-right:4px}}
+@media(max-width:430px){.day{height:96px}.event{border-left:0;padding:4px 2px}.time{display:block}.week div{font-size:11px}.event-layer{grid-template-rows:repeat(6,96px);padding-top:30px}.event-bar{font-size:9px;padding:3px}.event-bar .time{display:none}}
 
 .top-interaction{display:flex;justify-content:center;gap:10px;margin:10px auto 0;padding:6px;width:max-content;max-width:calc(100% - 28px);background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.82);border-radius:999px;box-shadow:0 10px 30px rgba(92,108,150,.10);backdrop-filter:blur(12px)}
 .top-interaction a{padding:10px 22px;border-radius:999px;text-decoration:none;color:#68718e;font-weight:800;font-size:.82rem;letter-spacing:1px;transition:.25s}.top-interaction a:hover,.top-interaction a.active{background:linear-gradient(135deg,#e9f8ff,#f1eaff);color:#716ac1;box-shadow:0 6px 18px rgba(92,108,150,.10)}
@@ -40,7 +54,7 @@ body{background:linear-gradient(180deg,#e8f7ff 0%,#f5f1ff 48%,#fff 100%)}body.da
 </style>
 </head>
 <body><nav class="top-interaction" aria-label="페이지 이동"><a href="../index.html">PROFILE</a><a href="./index.html" class="active">CALENDER</a></nav>
-<header><h1>📅 일정표</h1><p>일정을 확인하고 관리자만 수정할 수 있습니다.</p></header>
+<header><h1>📅 하늘이의 일정표</h1><p>일정을 확인하고 관리자만 수정할 수 있습니다.</p></header>
 <div class="wrap">
 <div class="tools">
 <span id="status" class="status">보기 모드</span>
@@ -55,7 +69,7 @@ body{background:linear-gradient(180deg,#e8f7ff 0%,#f5f1ff 48%,#fff 100%)}body.da
 <section class="calendar">
 <div class="bar"><div class="month" id="month"></div><div class="nav"><button id="prev">‹</button><button id="next">›</button></div></div>
 <div class="week"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
-<div class="grid" id="grid"></div>
+<div class="calendar-body"><div class="grid" id="grid"></div><div class="event-layer" id="eventLayer"></div></div>
 </section>
 </div>
 
@@ -69,9 +83,9 @@ body{background:linear-gradient(180deg,#e8f7ff 0%,#f5f1ff 48%,#fff 100%)}body.da
 <h2 id="eventHeading">일정 추가</h2>
 <form id="form">
 <input id="eid" type="hidden">
-<label>날짜<input id="date" type="date" required></label>
+<div class="row"><div><label>시작일<input id="date" type="date" required></label></div><div><label>종료일<input id="endDate" type="date" required></label></div></div>
 <div class="row"><div><label>시간<input id="time" type="time"></label></div>
-<div><label>분류<select id="cat"><option>방송</option><option>게임</option><option>소통</option><option>기타</option></select></label></div></div>
+<div><label>분류<select id="cat"><option>방송</option><option>게임</option><option>소통</option><option>휴방</option><option>기타</option></select></label></div></div>
 <label>제목<input id="title" maxlength="60" required placeholder="예: 저녁 소통 방송"></label>
 <label>내용<textarea id="detail" maxlength="300" placeholder="추가 내용을 입력하세요."></textarea></label>
 <div class="actions"><button type="button" class="btn" id="eventCancel">취소</button><button type="button" class="btn danger" id="del" style="display:none">삭제</button><button class="btn primary">저장</button></div>
@@ -86,10 +100,37 @@ const key=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function api(url,opt={}){const headers={...(opt.headers||{})};if(token)headers.Authorization=`Bearer ${token}`;if(opt.body&&!headers['Content-Type'])headers['Content-Type']='application/json';const r=await fetch(url,{...opt,headers});if(r.status===401){admin=false;token="";localStorage.removeItem('gaksky-admin-token');}if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||'요청에 실패했습니다.');}return r.json();}
 async function loadEvents(){events=await api('/api/events');render();}
-function render(){const y=current.getFullYear(),m=current.getMonth(),first=new Date(y,m,1);$("month").textContent=`${y}년 ${m+1}월`;let html="";for(let i=0;i<42;i++){const d=new Date(y,m,i-first.getDay()+1),inM=d.getMonth()===m,k=key(d),today=k===key(new Date());const list=events.filter(e=>e.date===k).sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));html+=`<div class="day ${inM?'':'other'} ${today?'today':''}" data-date="${k}"><div class="num">${d.getDate()}</div><div>`;for(const e of list)html+=`<div class="event" data-id="${e.id}"><span class="time">${esc(e.time||'')}</span><strong>${esc(e.title)}</strong>${e.detail?`<span class="detail"> · ${esc(e.detail)}</span>`:''}</div>`;html+='</div></div>';}$("grid").innerHTML=html;document.querySelectorAll('.event').forEach(el=>el.onclick=()=>{if(admin)openEvent(el.dataset.id)});document.querySelectorAll('.day').forEach(el=>el.ondblclick=()=>{if(admin)openEvent(null,el.dataset.date)});$("status").textContent=admin?'관리자 모드':'보기 모드';$("login").style.display=admin?'none':'inline-block';$("logout").style.display=admin?'inline-block':'none';$("add").style.display=admin?'inline-block':'none';$("backup").style.display='none';$("restore").style.display='none';}
-function openEvent(id,date){const e=id?events.find(x=>x.id===id):null;$("eventHeading").textContent=e?'일정 수정':'일정 추가';$("eid").value=e?.id||'';$("date").value=e?.date||date||key(new Date());$("time").value=e?.time||'';$("cat").value=e?.cat||'방송';$("title").value=e?.title||'';$("detail").value=e?.detail||'';$("del").style.display=e?'inline-block':'none';$("eventBg").classList.add('show');}
+function toDate(k){const [y,m,d]=String(k).split('-').map(Number);return new Date(y,m-1,d)}
+function dayDiff(a,b){return Math.round((toDate(b)-toDate(a))/86400000)}
+function laneFor(used,start,end){let lane=0;while((used[lane]||[]).some(r=>!(end<r[0]||start>r[1])))lane++;(used[lane]||(used[lane]=[])).push([start,end]);return lane}
+function render(){
+ const y=current.getFullYear(),m=current.getMonth(),first=new Date(y,m,1);$("month").textContent=`${y}년 ${m+1}월`;let html="";
+ const gridStart=new Date(y,m,1-first.getDay());const gridEnd=new Date(gridStart);gridEnd.setDate(gridStart.getDate()+41);
+ for(let i=0;i<42;i++){const d=new Date(gridStart);d.setDate(gridStart.getDate()+i);const inM=d.getMonth()===m,k=key(d),today=k===key(new Date());html+=`<div class="day ${inM?'':'other'} ${today?'today':''}" data-date="${k}"><div class="num">${d.getDate()}</div></div>`;}
+ $("grid").innerHTML=html;
+ const weekUsed=Array.from({length:6},()=>[]), bars=[];
+ for(const e of events){
+   const es=e.date, ee=e.end_date||e.date; if(ee<key(gridStart)||es>key(gridEnd))continue;
+   let cursor=toDate(es<key(gridStart)?key(gridStart):es), final=toDate(ee>key(gridEnd)?key(gridEnd):ee);
+   while(cursor<=final){
+     const idx=dayDiff(key(gridStart),key(cursor)), row=Math.floor(idx/7), col=idx%7;
+     const daysLeft=6-col, remaining=dayDiff(key(cursor),key(final))+1, span=Math.min(daysLeft,remaining);
+     const lane=laneFor(weekUsed[row],col,col+span-1);
+     const firstSeg=key(cursor)===es, lastSeg=dayDiff(key(cursor),key(final))<daysLeft;
+     const cls=`cat-${String(e.cat||'기타').replace(/[^가-힣A-Za-z0-9_-]/g,'')}`;
+     const shape=(firstSeg&&lastSeg)?'single':`${firstSeg?'start':''} ${lastSeg?'end':''}`;
+     bars.push(`<div class="event-bar ${cls} ${shape} ${firstSeg?'':'continuation'}" data-id="${e.id}" style="grid-column:${col+1}/span ${span};grid-row:${row+1};margin-top:${2+lane*28}px" title="${esc(e.cat||'기타')} · ${esc(e.title)}">${firstSeg?`<span class="time">${esc(e.time||'')}</span>`:''}<strong>${esc(e.title)}</strong></div>`);
+     cursor.setDate(cursor.getDate()+span);
+   }
+ }
+ $("eventLayer").innerHTML=bars.join('');
+ document.querySelectorAll('.event-bar').forEach(el=>el.onclick=()=>{if(admin)openEvent(el.dataset.id)});
+ document.querySelectorAll('.day').forEach(el=>el.ondblclick=()=>{if(admin)openEvent(null,el.dataset.date)});
+ $("status").textContent=admin?'관리자 모드':'보기 모드';$("login").style.display=admin?'none':'inline-block';$("logout").style.display=admin?'inline-block':'none';$("add").style.display=admin?'inline-block':'none';$("backup").style.display='none';$("restore").style.display='none';
+} 
+function openEvent(id,date){const e=id?events.find(x=>x.id===id):null;const start=e?.date||date||key(new Date());$("eventHeading").textContent=e?'일정 수정':'일정 추가';$("eid").value=e?.id||'';$("date").value=start;$("endDate").value=e?.end_date||start;$("time").value=e?.time||'';$("cat").value=e?.cat||'방송';$("title").value=e?.title||'';$("detail").value=e?.detail||'';$("del").style.display=e?'inline-block':'none';$("eventBg").classList.add('show');}
 $("login").onclick=()=>$("loginBg").classList.add('show');$("loginCancel").onclick=()=>$("loginBg").classList.remove('show');$("loginOk").onclick=async()=>{try{const d=await api('/api/login',{method:'POST',body:JSON.stringify({password:$("pw").value})});token=d.token;localStorage.setItem('gaksky-admin-token',token);admin=true;$("pw").value='';$("loginBg").classList.remove('show');render();}catch(e){alert(e.message)}};
-$("logout").onclick=()=>{admin=false;token='';localStorage.removeItem('gaksky-admin-token');render();};$("add").onclick=()=>openEvent();$("eventCancel").onclick=()=>$("eventBg").classList.remove('show');$("form").onsubmit=async ev=>{ev.preventDefault();try{const id=$("eid").value;const body={date:$("date").value,time:$("time").value,cat:$("cat").value,title:$("title").value.trim(),detail:$("detail").value.trim()};await api(id?'/api/events/'+id:'/api/events',{method:id?'PUT':'POST',body:JSON.stringify(body)});$("eventBg").classList.remove('show');await loadEvents();}catch(e){alert(e.message)}};$("del").onclick=async()=>{if(!confirm('이 일정을 삭제할까요?'))return;try{await api('/api/events/'+$("eid").value,{method:'DELETE'});$("eventBg").classList.remove('show');await loadEvents();}catch(e){alert(e.message)}};
+$("logout").onclick=()=>{admin=false;token='';localStorage.removeItem('gaksky-admin-token');render();};$("add").onclick=()=>openEvent();$("eventCancel").onclick=()=>$("eventBg").classList.remove('show');$("form").onsubmit=async ev=>{ev.preventDefault();try{const id=$("eid").value;const body={date:$("date").value,end_date:$("endDate").value,time:$("time").value,cat:$("cat").value,title:$("title").value.trim(),detail:$("detail").value.trim()};if(body.end_date<body.date)throw new Error("종료일은 시작일보다 빠를 수 없습니다.");await api(id?'/api/events/'+id:'/api/events',{method:id?'PUT':'POST',body:JSON.stringify(body)});$("eventBg").classList.remove('show');await loadEvents();}catch(e){alert(e.message)}};$("del").onclick=async()=>{if(!confirm('이 일정을 삭제할까요?'))return;try{await api('/api/events/'+$("eid").value,{method:'DELETE'});$("eventBg").classList.remove('show');await loadEvents();}catch(e){alert(e.message)}};
 $("prev").onclick=()=>{current.setMonth(current.getMonth()-1);render()};$("next").onclick=()=>{current.setMonth(current.getMonth()+1);render()};$("today").onclick=()=>{current=new Date();current.setDate(1);render()};
 const darkToggle=$("darkToggle");function setTheme(t){const dark=t==='dark';document.body.classList.toggle('dark',dark);darkToggle.textContent=dark?'☀️ 라이트모드':'🌙 다크모드';localStorage.setItem('gaksky-theme',t)}const st=localStorage.getItem('gaksky-theme');if(st)setTheme(st);else if(matchMedia('(prefers-color-scheme: dark)').matches)setTheme('dark');darkToggle.onclick=()=>setTheme(document.body.classList.contains('dark')?'light':'dark');
 (async()=>{try{if(token){await api('/api/me');admin=true;}await loadEvents();}catch(e){alert('일정을 불러오지 못했습니다: '+e.message)}})();
