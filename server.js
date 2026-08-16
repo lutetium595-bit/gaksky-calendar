@@ -48,6 +48,31 @@ app.post('/api/events',auth,async(req,res)=>{if(!valid(req.body))return res.stat
 app.put('/api/events/:id',auth,async(req,res)=>{if(!valid(req.body))return res.status(400).json({error:'시작일, 종료일, 제목을 확인하세요. 종료일은 시작일보다 빠를 수 없습니다.'});try{const v=clean(req.body);const r=await pool.query(`UPDATE events SET date=$1,end_date=$2,time=$3,cat=$4,title=$5,detail=$6 WHERE id=$7 RETURNING ${cols}`,[v.date,v.end_date,v.time,v.cat,v.title,v.detail,req.params.id]);if(!r.rowCount)return res.status(404).json({error:'일정을 찾을 수 없습니다.'});res.json(r.rows[0])}catch(e){console.error(e);res.status(500).json({error:'일정 수정에 실패했습니다.'})}});
 app.delete('/api/events/:id',auth,async(req,res)=>{try{const r=await pool.query('DELETE FROM events WHERE id=$1',[req.params.id]);if(!r.rowCount)return res.status(404).json({error:'일정을 찾을 수 없습니다.'});res.json({ok:true})}catch(e){console.error(e);res.status(500).json({error:'일정 삭제에 실패했습니다.'})}});
 
+// 정적 파일 공개
 app.use(express.static(__dirname));
-app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'index.html')));
-initDb().then(()=>app.listen(PORT,()=>console.log(`Server running on ${PORT}`))).catch(e=>{console.error('DB 연결 실패:',e);process.exit(1)});
+
+// 메인 프로필
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// 캘린더 페이지
+app.get('/calendar', (req, res) => {
+  res.sendFile(path.join(__dirname, 'calendar', 'index.html'));
+});
+
+app.get('/calendar/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'calendar', 'index.html'));
+});
+
+// 데이터베이스 준비 후 서버 실행
+initDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on ${PORT}`);
+    });
+  })
+  .catch(e => {
+    console.error('DB 연결 실패:', e);
+    process.exit(1);
+  });
