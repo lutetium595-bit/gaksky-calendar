@@ -104,8 +104,29 @@ const key=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 async function api(url,opt={}){const headers={...(opt.headers||{})};if(token)headers.Authorization=`Bearer ${token}`;if(opt.body&&!headers['Content-Type'])headers['Content-Type']='application/json';const r=await fetch(url,{...opt,headers});if(r.status===401){admin=false;token="";localStorage.removeItem('gaksky-admin-token');}if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||'요청에 실패했습니다.');}return r.json();}
 async function loadEvents(){events=await api('/api/events');render();}
-function toDate(k){const [y,m,d]=String(k).split('-').map(Number);return new Date(y,m-1,d)}
-function dayDiff(a,b){return Math.round((toDate(b)-toDate(a))/86400000)}
+function toDate(k){
+  const parts = String(k || '').split('-').map(Number);
+
+  if(
+    parts.length !== 3 ||
+    !Number.isFinite(parts[0]) ||
+    !Number.isFinite(parts[1]) ||
+    !Number.isFinite(parts[2])
+  ){
+    return null;
+  }
+
+  return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+}
+
+function dayDiff(a,b){
+  const start = toDate(a);
+  const end = toDate(b);
+
+  if(!start || !end) return 0;
+
+  return Math.round((end - start) / 86400000);
+}
 function laneFor(used,start,end){let lane=0;while((used[lane]||[]).some(r=>!(end<r[0]||start>r[1])))lane++;(used[lane]||(used[lane]=[])).push([start,end]);return lane}
 function render(){
  const y=current.getFullYear(),m=current.getMonth(),first=new Date(y,m,1);$("month").textContent=`${y}년 ${m+1}월`;let html="";
@@ -113,20 +134,75 @@ function render(){
  for(let i=0;i<42;i++){const d=new Date(gridStart);d.setDate(gridStart.getDate()+i);const inM=d.getMonth()===m,k=key(d),today=k===key(new Date());html+=`<div class="day ${inM?'':'other'} ${today?'today':''}" data-date="${k}"><div class="num">${d.getDate()}</div></div>`;}
  $("grid").innerHTML=html;
  const weekUsed=Array.from({length:6},()=>[]), bars=[];
- for(const e of events){
-   const es=e.date, ee=e.end_date||e.date; if(ee<key(gridStart)||es>key(gridEnd))continue;
-   let cursor=toDate(es<key(gridStart)?key(gridStart):es), final=toDate(ee>key(gridEnd)?key(gridEnd):ee);
-   while(cursor<=final){
-     const idx=dayDiff(key(gridStart),key(cursor)), row=Math.floor(idx/7), col=idx%7;
-     const daysLeft=6-col, remaining=dayDiff(key(cursor),key(final))+1, span=Math.min(daysLeft,remaining);
-     const lane=laneFor(weekUsed[row],col,col+span-1);
-     const firstSeg=key(cursor)===es, lastSeg=dayDiff(key(cursor),key(final))<daysLeft;
-     const cls=`cat-${String(e.cat||'기타').replace(/[^가-힣A-Za-z0-9_-]/g,'')}`;
-     const shape=(firstSeg&&lastSeg)?'single':`${firstSeg?'start':''} ${lastSeg?'end':''}`;
-     bars.push(`<div class="event-bar ${cls} ${shape} ${firstSeg?'':'continuation'}" data-id="${e.id}" style="grid-column:${col+1}/span ${span};grid-row:${row+1};margin-top:${2+lane*28}px" title="${esc(e.cat||'기타')} · ${esc(e.title)}">${firstSeg?`<span class="time">${esc(e.time||'')}</span>`:''}<strong>${esc(e.title)}</strong></div>`);
-     cursor.setDate(cursor.getDate()+span);
-   }
- }
+for(const e of events){
+  const es = String(e.date || '');
+  const ee = String(e.end_date || e.date || '');
+
+  // 잘못된 데이터는 건너뛰기
+  if(!toDate(es) || !toDate(ee)) continue;
+  if(ee < es) continue;
+
+  // 현재 달력 범위 밖이면 표시하지 않음
+  if(ee < key(gridStart) || es > key(gridEnd)) continue;
+
+  let cursor = toDate(es < key(gridStart) ? key(gridStart) : es);
+  const final = toDate(ee > key(gridEnd) ? key(gridEnd) : ee);
+
+  // 무한 반복 방지
+  let safety = 0;
+
+  while(cursor && final && cursor <= final && safety < 50){
+    safety++;
+
+    const idx = dayDiff(key(gridStart), key(cursor));
+
+    if(idx < 0 || idx > 41) break;
+
+    const row = Math.floor(idx / 7);
+    const col = idx % 7;
+
+    const daysLeft = 7 - col;
+    const remaining = dayDiff(key(cursor), key(final)) + 1;
+
+    // span이 0이 되는 경우 무한 반복 방지
+    const span = Math.max(1, Math.min(daysLeft, remaining));
+
+    const lane = laneFor(
+      weekUsed[row],
+      col,
+      col + span - 1
+    );
+
+    const firstSeg = key(cursor) === es;
+    const lastSeg = dayDiff(key(cursor), key(final)) < daysLeft;
+
+    const cls = `cat-${String(e.cat || '기타')
+      .replace(/[^가-힣A-Za-z0-9_-]/g,'')}`;
+
+    const shape =
+      (firstSeg && lastSeg)
+        ? 'single'
+        : `${firstSeg ? 'start' : ''} ${lastSeg ? 'end' : ''}`;
+
+    bars.push(`
+      <div
+        class="event-bar ${cls} ${shape} ${firstSeg ? '' : 'continuation'}"
+        data-id="${e.id}"
+        style="
+          grid-column:${col + 1}/span ${span};
+          grid-row:${row + 1};
+          margin-top:${2 + lane * 28}px
+        "
+        title="${esc(e.cat || '기타')} · ${esc(e.title)}"
+      >
+        ${firstSeg ? `<span class="time">${esc(e.time || '')}</span>` : ''}
+        <strong>${esc(e.title)}</strong>
+      </div>
+    `);
+
+    cursor.setDate(cursor.getDate() + span);
+  }
+}
  $("eventLayer").innerHTML=bars.join('');
  document.querySelectorAll('.event-bar').forEach(el=>el.onclick=()=>{if(admin)openEvent(el.dataset.id)});
  document.querySelectorAll('.day').forEach(el=>el.ondblclick=()=>{if(admin)openEvent(null,el.dataset.date)});
