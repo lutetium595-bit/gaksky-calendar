@@ -157,6 +157,86 @@ body.dark .nav button{background:#22313c}
 body.dark .top-interaction{background:rgba(27,31,53,.60);border-color:rgba(255,255,255,.08)}body.dark .top-interaction a{color:#dfe5ff}body.dark .top-interaction a:hover,body.dark .top-interaction a.active{background:linear-gradient(135deg,rgba(70,117,150,.45),rgba(93,69,145,.45));color:#fff}
 body{background:linear-gradient(180deg,#e8f7ff 0%,#f5f1ff 48%,#fff 100%)}body.dark{background:linear-gradient(180deg,#111827 0%,#1b1930 48%,#12131c 100%)}header{padding-top:18px} .calendar{background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.9);backdrop-filter:blur(12px);box-shadow:0 20px 55px rgba(92,108,150,.12)}body.dark .calendar{background:rgba(27,31,53,.82);border-color:rgba(255,255,255,.08)}
 @media(max-width:650px){.top-interaction a{padding:9px 17px;font-size:.75rem}}
+/* =========================
+   보기 모드 일정 상세 팝업
+========================= */
+.detail-popup{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  background:rgba(0,0,0,.35);
+  z-index:30;
+}
+
+.detail-popup.show{
+  display:flex;
+}
+
+.detail-box{
+  width:min(380px,100%);
+  background:var(--card);
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25);
+  animation:popupShow .18s ease;
+}
+
+@keyframes popupShow{
+  from{
+    opacity:0;
+    transform:translateY(8px) scale(.97);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+.detail-box h2{
+  margin:0 0 14px;
+  font-size:20px;
+}
+
+.detail-info{
+  display:grid;
+  gap:10px;
+}
+
+.detail-row{
+  display:grid;
+  grid-template-columns:75px 1fr;
+  gap:10px;
+  align-items:start;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--line);
+}
+
+.detail-row:last-child{
+  border-bottom:0;
+  padding-bottom:0;
+}
+
+.detail-label{
+  color:var(--muted);
+  font-size:13px;
+  font-weight:700;
+}
+
+.detail-value{
+  font-size:14px;
+  line-height:1.6;
+  word-break:break-word;
+}
+
+.detail-close{
+  width:100%;
+  margin-top:18px;
+}
 </style>
 </head>
 <body>
@@ -201,7 +281,42 @@ body{background:linear-gradient(180deg,#e8f7ff 0%,#f5f1ff 48%,#fff 100%)}body.da
 <div class="actions"><button type="button" class="btn" id="eventCancel">취소</button><button type="button" class="btn danger" id="del" style="display:none">삭제</button><button class="btn primary">저장</button></div>
 </form>
 </div></div>
+<!-- 보기 모드 일정 상세 -->
+<div class="detail-popup" id="detailPopup">
+  <div class="detail-box">
 
+    <h2 id="detailTitle">일정 상세</h2>
+
+    <div class="detail-info">
+
+      <div class="detail-row">
+        <div class="detail-label">분류</div>
+        <div class="detail-value" id="detailCat"></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-label">기간</div>
+        <div class="detail-value" id="detailDate"></div>
+      </div>
+
+      <div class="detail-row" id="detailTimeRow">
+        <div class="detail-label">시간</div>
+        <div class="detail-value" id="detailTime"></div>
+      </div>
+
+      <div class="detail-row" id="detailContentRow">
+        <div class="detail-label">내용</div>
+        <div class="detail-value" id="detailContent"></div>
+      </div>
+
+    </div>
+
+    <button class="btn primary detail-close" id="detailClose">
+      확인
+    </button>
+
+  </div>
+</div>
 <script>
 let events=[], admin=false, token=localStorage.getItem("gaksky-admin-token")||"";
 let current=new Date(); current.setDate(1);
@@ -310,14 +425,61 @@ for(const e of events){
   }
 }
  $("eventLayer").innerHTML=bars.join('');
- document.querySelectorAll('.event-bar').forEach(el=>el.onclick=()=>{if(admin)openEvent(el.dataset.id)});
- document.querySelectorAll('.day').forEach(el=>el.ondblclick=()=>{if(admin)openEvent(null,el.dataset.date)});
+document.querySelectorAll('.event-bar').forEach(el=>{
+  el.onclick=()=>{
+    if(admin){
+      // 관리자 모드에서는 기존 일정 수정
+      openEvent(el.dataset.id);
+    }else{
+      // 보기 모드에서는 일정 상세 보기
+      openDetail(el.dataset.id);
+    }
+  };
+}); document.querySelectorAll('.day').forEach(el=>el.ondblclick=()=>{if(admin)openEvent(null,el.dataset.date)});
  $("status").textContent=admin?'관리자 모드':'보기 모드';$("login").style.display=admin?'none':'inline-block';$("logout").style.display=admin?'inline-block':'none';$("add").style.display=admin?'inline-block':'none';$("backup").style.display='none';$("restore").style.display='none';
 } 
-function openEvent(id,date){const e=id?events.find(x=>x.id===id):null;const start=e?.date||date||key(new Date());$("eventHeading").textContent=e?'일정 수정':'일정 추가';$("eid").value=e?.id||'';$("date").value=start;$("endDate").value=e?.end_date||start;$("time").value=e?.time||'';$("cat").value=e?.cat||'방송';$("title").value=e?.title||'';$("detail").value=e?.detail||'';$("del").style.display=e?'inline-block':'none';$("eventBg").classList.add('show');}
+function openDetail(id){
+  const e = events.find(x => x.id === id);
+
+  if(!e) return;
+
+  $("detailTitle").textContent = e.title || "일정 상세";
+  $("detailCat").textContent = e.cat || "기타";
+
+  const start = e.date || "";
+  const end = e.end_date || start;
+
+  if(start === end){
+    $("detailDate").textContent = start;
+  }else{
+    $("detailDate").textContent = `${start} ~ ${end}`;
+  }
+
+  const hasTime = !!e.time;
+  $("detailTime").textContent = e.time || "";
+  $("detailTimeRow").style.display = hasTime ? "grid" : "none";
+
+  const hasContent = !!String(e.detail || "").trim();
+  $("detailContent").textContent = e.detail || "";
+  $("detailContentRow").style.display = hasContent ? "grid" : "none";
+
+  $("detailPopup").classList.add("show");
+}
+
+function closeDetail(){
+  $("detailPopup").classList.remove("show");
+}
+   function openEvent(id,date){const e=id?events.find(x=>x.id===id):null;const start=e?.date||date||key(new Date());$("eventHeading").textContent=e?'일정 수정':'일정 추가';$("eid").value=e?.id||'';$("date").value=start;$("endDate").value=e?.end_date||start;$("time").value=e?.time||'';$("cat").value=e?.cat||'방송';$("title").value=e?.title||'';$("detail").value=e?.detail||'';$("del").style.display=e?'inline-block':'none';$("eventBg").classList.add('show');}
 $("login").onclick=()=>$("loginBg").classList.add('show');$("loginCancel").onclick=()=>$("loginBg").classList.remove('show');$("loginOk").onclick=async()=>{try{const d=await api('/api/login',{method:'POST',body:JSON.stringify({password:$("pw").value})});token=d.token;localStorage.setItem('gaksky-admin-token',token);admin=true;$("pw").value='';$("loginBg").classList.remove('show');render();}catch(e){alert(e.message)}};
 $("logout").onclick=()=>{admin=false;token='';localStorage.removeItem('gaksky-admin-token');render();};$("add").onclick=()=>openEvent();$("eventCancel").onclick=()=>$("eventBg").classList.remove('show');$("form").onsubmit=async ev=>{ev.preventDefault();try{const id=$("eid").value;const body={date:$("date").value,end_date:$("endDate").value,time:$("time").value,cat:$("cat").value,title:$("title").value.trim(),detail:$("detail").value.trim()};if(body.end_date<body.date)throw new Error("종료일은 시작일보다 빠를 수 없습니다.");await api(id?'/api/events/'+id:'/api/events',{method:id?'PUT':'POST',body:JSON.stringify(body)});$("eventBg").classList.remove('show');await loadEvents();}catch(e){alert(e.message)}};$("del").onclick=async()=>{if(!confirm('이 일정을 삭제할까요?'))return;try{await api('/api/events/'+$("eid").value,{method:'DELETE'});$("eventBg").classList.remove('show');await loadEvents();}catch(e){alert(e.message)}};
 $("prev").onclick=()=>{current.setMonth(current.getMonth()-1);render()};$("next").onclick=()=>{current.setMonth(current.getMonth()+1);render()};$("today").onclick=()=>{current=new Date();current.setDate(1);render()};
+   $("detailClose").onclick = closeDetail;
+
+$("detailPopup").onclick = e => {
+  if(e.target === $("detailPopup")){
+    closeDetail();
+  }
+};
 const darkToggle=$("darkToggle");function setTheme(t){const dark=t==='dark';document.body.classList.toggle('dark',dark);darkToggle.textContent=dark?'☀️ 라이트모드':'🌙 다크모드';localStorage.setItem('gaksky-theme',t)}const st=localStorage.getItem('gaksky-theme');if(st)setTheme(st);else if(matchMedia('(prefers-color-scheme: dark)').matches)setTheme('dark');darkToggle.onclick=()=>setTheme(document.body.classList.contains('dark')?'light':'dark');
 (async()=>{try{if(token){await api('/api/me');admin=true;}await loadEvents();}catch(e){alert('일정을 불러오지 못했습니다: '+e.message)}})();
 </script>
